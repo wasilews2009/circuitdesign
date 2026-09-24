@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Практична робота №1 — Кодування та перетворення інформації</title>
+<style>
+:root{
+  --bg:#FFFFFF;
+  --panel:#F6F8FA;
+  --panel2:#EDF1F4;
+  --line:#D6DEE6;
+  --line-soft:#E1E7EC;
+  --text:#151E28;
+  --muted:#5B6B7B;
+  --cyan:#0A6F66;
+  --cyan-dim:#CFEDE8;
+  --amber:#9C6310;
+  --danger:#C0433C;
+  --off:#D5DCE3;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Segoe UI","Space Grotesk",-apple-system,system-ui,sans-serif;
+  line-height:1.6;
+}
+.mono{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,Menlo,monospace;}
+h1,h2,h3,h4{
+  font-family:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+  font-weight:600;
+  letter-spacing:.2px;
+  margin:0 0 .5em 0;
+}
+p{margin:.6em 0; max-width:72ch; color:var(--text);}
+p.lead{color:var(--muted);}
+a{color:var(--cyan);}
+
+/* ===== HERO ===== */
+.hero{
+  position:relative;
+  padding:64px 24px 40px;
+  background:
+    linear-gradient(180deg,#FFFFFF 0%, #F7FAFB 70%, var(--bg) 100%);
+  border-bottom:1px solid var(--line);
+  overflow:hidden;
+}
+.hero-inner{max-width:920px;margin:0 auto;position:relative;z-index:2;}
+.hero .kicker{
+  color:var(--cyan);
+  font-family:"IBM Plex Mono",monospace;
+  font-size:.85rem;
+  letter-spacing:.5px;
+}
+.hero h1{font-size:clamp(1.6rem,4vw,2.3rem); max-width:24ch;}
+.hero p.lead{font-size:1.05rem; max-width:60ch;}
+#waveCanvas{
+  position:absolute; right:-40px; top:0; bottom:0; width:60%; height:100%;
+  opacity:.55; z-index:1;
+}
+@media (max-width:800px){ #waveCanvas{display:none;} }
+
+/* ===== LAYOUT ===== */
+.layout{
+  max-width:1180px; margin:0 auto;
+  display:grid;
+  grid-template-columns:250px minmax(0,1fr);
+  gap:36px;
+  padding:32px 24px 80px;
+  align-items:start;
+}
+nav.toc{
+  position:sticky; top:20px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:16px;
+  font-size:.92rem;
+}
+nav.toc .toc-title{
+  font-family:"IBM Plex Mono",monospace;
+  color:var(--muted);
+  font-size:.75rem;
+  letter-spacing:.5px;
+  margin-bottom:10px;
+}
+nav.toc ol{list-style:none;margin:0;padding:0;}
+nav.toc li{margin:0;}
+nav.toc a{
+  display:block;
+  color:var(--text);
+  text-decoration:none;
+  padding:7px 8px;
+  border-left:2px solid transparent;
+  border-radius:4px;
+  font-size:.88rem;
+}
+nav.toc a:hover, nav.toc a.active{
+  color:var(--cyan);
+  border-left-color:var(--cyan);
+  background:var(--panel2);
+}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  nav.toc{position:relative; top:0;}
+}
+
+main{min-width:0;}
+section.block{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:28px clamp(18px,3vw,36px);
+  margin-bottom:28px;
+  scroll-margin-top:20px;
+}
+section.block .num{
+  font-family:"IBM Plex Mono",monospace;
+  color:var(--cyan);
+  font-size:.85rem;
+  letter-spacing:.5px;
+}
+section.block h2{font-size:1.4rem; margin-top:2px;}
+section.block h3{font-size:1.1rem; color:var(--text); margin-top:1.2em;}
+.card{
+  background:var(--panel2);
+  border:1px solid var(--line-soft);
+  border-radius:8px;
+  padding:16px 18px;
+  margin:14px 0;
+}
+.card.note{border-left:3px solid var(--amber);}
+.card.warn{border-left:3px solid var(--danger);}
+.card.lab{border-left:3px solid var(--cyan);}
+ul,ol{padding-left:1.3em;}
+li{margin:.35em 0;}
+strong{color:#0B1420; font-weight:600;}
+em.term{color:var(--cyan); font-style:normal; font-weight:600;}
+
+table{border-collapse:collapse; width:100%; margin:14px 0; font-size:.92rem;}
+th,td{border:1px solid var(--line-soft); padding:8px 10px; text-align:center;}
+th{background:var(--panel2); color:var(--cyan); font-family:"IBM Plex Mono",monospace; font-size:.8rem;}
+td.lbl{text-align:left; color:var(--muted);}
+tr.hl{background:#CFEDE880;}
+
+.bit{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:34px;height:34px; border-radius:8px;
+  font-family:"IBM Plex Mono",monospace; font-weight:700; font-size:1rem;
+  border:1px solid var(--line-soft); cursor:pointer; user-select:none;
+  background:var(--off); color:var(--muted);
+  transition:background .15s, color .15s, box-shadow .15s;
+}
+.bit.on{background:var(--cyan); color:#FFFFFF; box-shadow:0 0 12px rgba(10,111,102,.35); border-color:var(--cyan);}
+.bit.static{cursor:default;}
+.bit.danger{background:var(--danger); color:#FFFFFF; border-color:var(--danger);}
+
+.ctrl-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0;}
+.ctrl-row label{font-family:"IBM Plex Mono",monospace; font-size:.85rem; color:var(--muted); min-width:2ch;}
+button.btn{
+  font-family:"Space Grotesk",sans-serif; font-size:.85rem; font-weight:600;
+  background:var(--panel2); color:var(--text); border:1px solid var(--line-soft);
+  padding:9px 16px; border-radius:8px; cursor:pointer;
+}
+button.btn:hover{border-color:var(--cyan); color:var(--cyan);}
+button.btn:active{transform:translateY(1px);}
+button.btn.primary{background:var(--cyan); color:#FFFFFF; border-color:var(--cyan);}
+button.btn.primary:hover{color:#FFFFFF; opacity:.9;}
+
+.readout{
+  font-family:"IBM Plex Mono",monospace; font-size:1.15rem; font-weight:700;
+  color:var(--cyan);
+}
+.led-wrap{display:flex; gap:8px; flex-wrap:wrap;}
+
+svg.gate-svg{display:block;}
+.gate-widget{
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  background:var(--panel2); border:1px solid var(--line-soft); border-radius:8px;
+  padding:16px; margin:12px 0;
+}
+.gate-widget .gate-name{min-width:70px; font-weight:600; font-size:.88rem;}
+.gate-io{display:flex; align-items:center; gap:10px;}
+.arrow{color:var(--muted);}
+
+footer{
+  text-align:center; color:var(--muted); font-size:.85rem;
+  padding:30px 20px 60px;
+}
+.pill{
+  display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.72rem;
+  color:var(--amber); border:1px solid var(--amber); border-radius:20px;
+  padding:2px 10px; margin-bottom:8px;
+}
+canvas.demo{width:100%; max-width:640px; height:180px; display:block; background:var(--panel2); border-radius:8px; border:1px solid var(--line-soft);}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:640px){.two-col{grid-template-columns:1fr;}}
+.hr{height:1px; background:var(--line-soft); margin:20px 0; border:none;}
+
+/* ===== practical-work specific ===== */
+.goal-box{background:var(--cyan-dim); border:1px solid var(--cyan); border-radius:10px; padding:18px 22px;}
+.goal-box .goal-label{font-family:"IBM Plex Mono",monospace; font-size:.78rem; color:var(--cyan); letter-spacing:.5px;}
+.goal-box p{color:#0B1420; margin-top:6px;}
+
+.variant-picker{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
+.variant-btn{
+  font-family:"IBM Plex Mono",monospace; font-size:.82rem;
+  background:var(--panel); border:1px solid var(--line-soft); border-radius:6px;
+  padding:6px 13px; cursor:pointer; color:var(--text);
+}
+.variant-btn:hover{border-color:var(--cyan); color:var(--cyan);}
+.variant-btn.active{background:var(--cyan); color:#FFFFFF; border-color:var(--cyan);}
+
+.formula-box{
+  font-family:"IBM Plex Mono",monospace; font-size:1.08rem;
+  background:var(--panel2); border:1px solid var(--line-soft); border-radius:8px;
+  padding:12px 18px; display:inline-block; margin:10px 0; color:#0B1420;
+}
+
+input.textbox{
+  font-family:"IBM Plex Mono",monospace; background:#FFFFFF;
+  border:1px solid var(--line-soft); border-radius:6px; padding:9px 12px;
+  color:var(--text); font-size:.95rem;
+}
+input.textbox:focus{outline:none; border-color:var(--cyan);}
+input.textbox.err{border-color:var(--danger);}
+
+.bitrow{display:flex; gap:4px; font-family:"IBM Plex Mono",monospace; align-items:center;}
+.bitrow .lbl{width:70px; color:var(--muted); font-size:.82rem; flex-shrink:0;}
+.bitrow .cell{
+  width:28px;height:28px; display:flex; align-items:center; justify-content:center;
+  border-radius:6px; background:var(--off); color:var(--text); font-weight:700;
+  border:1px solid var(--line-soft); font-size:.92rem;
+}
+.bitrow .cell.carry{background:transparent; color:var(--amber); border:none; height:18px; font-size:.78rem;}
+.bitrow .cell.on{background:var(--cyan); color:#FFFFFF; border-color:var(--cyan);}
+.bitrow .cell.ghost{background:transparent; border:none;}
+
+.steps-box{font-family:"IBM Plex Mono",monospace; font-size:.86rem; overflow-x:auto;}
+.steps-box table{font-size:.86rem;}
+
+.term-chip{display:inline-block; margin:3px 6px 3px 0; padding:4px 9px; background:var(--panel); border:1px solid var(--line-soft); border-radius:6px; font-family:"IBM Plex Mono",monospace;}
+.overline{text-decoration:overline;}
+.ddnf-out{font-family:"IBM Plex Mono",monospace; font-size:1.05rem; background:var(--panel); border:1px solid var(--line-soft); border-radius:8px; padding:14px 16px; margin-top:10px; min-height:30px; color:#0B1420;}
+
+.mset{display:flex; gap:6px; flex-wrap:wrap; margin:10px 0;}
+.mset .bit{width:auto; min-width:34px; padding:0 6px; flex-direction:column; height:44px; font-size:.85rem; line-height:1.1;}
+.mset .bit small{font-size:.62rem; color:inherit; opacity:.85;}
+
+/* ===== quiz ===== */
+.quiz-head{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
+.score-badge{
+  font-family:"IBM Plex Mono",monospace; font-size:.9rem; font-weight:700;
+  background:var(--panel2); border:1px solid var(--line-soft); border-radius:20px;
+  padding:6px 16px; color:var(--cyan);
+}
+.quiz-q{background:var(--panel2); border:1px solid var(--line-soft); border-radius:10px; padding:18px 20px; margin:16px 0;}
+.quiz-q .qtitle{font-weight:600; margin-bottom:10px;}
+.quiz-opt{
+  display:block; width:100%; text-align:left; background:#FFFFFF;
+  border:1px solid var(--line-soft); border-radius:7px; padding:10px 15px;
+  margin:7px 0; cursor:pointer; font-family:"Segoe UI",sans-serif; font-size:.95rem;
+  color:var(--text);
+}
+.quiz-opt:hover:not([disabled]){border-color:var(--cyan);}
+.quiz-opt.correct{background:var(--cyan-dim); border-color:var(--cyan); font-weight:600;}
+.quiz-opt.incorrect{background:#F7DEDC; border-color:var(--danger);}
+.quiz-opt[disabled]{cursor:default;}
+.quiz-explain{margin-top:10px; font-size:.9rem; color:var(--muted); border-top:1px solid var(--line-soft); padding-top:10px;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+<canvas id="waveCanvas"></canvas>
+<div class="hero-inner">
+  <div class="kicker">ДИСТАНЦІЙНИЙ КУРС · КОМП'ЮТЕРНА СХЕМОТЕХНІКА ТА АРХІТЕКТУРА ІС · ПРАКТИЧНА РОБОТА №1</div>
+  <h1>Кодування та перетворення інформації: від сигналу до логічної функції</h1>
+  <p class="lead">П'ять завдань практичної роботи — з калькуляторами, покроковими алгоритмами й наочними схемами для самоперевірки, плюс підсумковий тест.</p>
+</div>
+</header>
+
+<div class="layout">
+<nav class="toc" id="toc">
+  <div class="toc-title">ЗМІСТ</div>
+  <ol>
+    <li><a href="#goal">Мета роботи</a></li>
+    <li><a href="#t1">Завдання 1. Квантування сигналів</a></li>
+    <li><a href="#t2">Завдання 2. Системи числення</a></li>
+    <li><a href="#t3">Завдання 3. Двійкова арифметика</a></li>
+    <li><a href="#t4">Завдання 4. Логічні операції</a></li>
+    <li><a href="#t5">Завдання 5. Побудова ДДНФ</a></li>
+    <li><a href="#quiz">Перевірка знань</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="block" id="goal">
+<div class="num">ПРАКТИЧНА РОБОТА №1</div>
+<h2>Мета роботи</h2>
+<div class="goal-box">
+  <div class="goal-label">МЕТА</div>
+  <p>Отримати практичні навички перетворення інформації з аналогової форми в цифрову, засвоїти методи переведення чисел між системами числення, виконання двійкової арифметики та побудови канонічних форм логічних функцій.</p>
+</div>
+<h3 style="margin-top:24px;">Завдання для виконання</h3>
+<p style="color:var(--muted);">Нижче — п'ять завдань практичної роботи. Оберіть свій варіант (номери 1–6), скористайтеся інтерактивними інструментами, щоб перевірити хід і результат обчислень.</p>
+</section>
+
+<section class="block" id="t1">
+<div class="num">ЗАВДАННЯ 1</div>
+<h2>Квантування сигналів</h2>
+<p>Визначте крок квантування (роздільну здатність) <em>h</em> для <em>n</em>-розрядного АЦП, якщо діапазон вхідної напруги становить від 0 до <em>U<sub>ref</sub></em> Вольт.</p>
+<div class="formula-box">h = U<sub>ref</sub> / 2<sup>n</sup></div>
+
+<table>
+<thead><tr><th>Варіант</th><th>U<sub>ref</sub> (В)</th><th>n (біт)</th></tr></thead>
+<tbody id="t1table">
+<tr><td><strong>1</strong></td><td>5</td><td>8</td></tr>
+<tr><td><strong>2</strong></td><td>10</td><td>10</td></tr>
+<tr><td><strong>3</strong></td><td>2.56</td><td>8</td></tr>
+<tr><td><strong>4</strong></td><td>12</td><td>12</td></tr>
+<tr><td><strong>5</strong></td><td>3.3</td><td>10</td></tr>
+<tr><td><strong>6</strong></td><td>5</td><td>12</td></tr>
+</tbody>
+</table>
+
+<div class="card lab">
+<strong>Калькулятор кроку квантування</strong>
+<p style="margin-top:6px; color:var(--muted);">Оберіть свій варіант — поля заповняться автоматично — або введіть власні значення.</p>
+<div class="variant-picker" id="t1variants"></div>
+<div class="ctrl-row">
+  <label>U<sub>ref</sub>:</label><input type="number" step="any" class="textbox" id="t1Uref" value="5" style="width:90px;">
+  <span style="color:var(--muted);">В</span>
+  <label style="margin-left:14px;">n:</label><input type="number" class="textbox" id="t1n" value="8" min="1" max="24" style="width:70px;">
+  <span style="color:var(--muted);">біт</span>
+  <button class="btn primary" id="t1calc" style="margin-left:10px;">Обчислити h</button>
+</div>
+<div class="ctrl-row">
+  <span style="color:var(--muted);">2<sup>n</sup> = </span><span class="readout mono" id="t1levels">256</span>
+  <span style="color:var(--muted); margin-left:18px;">h = </span><span class="readout mono" id="t1h">0.019531 В</span>
+</div>
+<canvas id="t1canvas" class="demo" style="height:120px;"></canvas>
+<p style="color:var(--muted); font-size:.88rem;">Шкала показує діапазон 0…U<sub>ref</sub>, розділений на рівні квантування (для наочності відображено не більше 32 сходинок).</p>
+</div>
+</section>
+
+<section class="block" id="t2">
+<div class="num">ЗАВДАННЯ 2</div>
+<h2>Системи числення</h2>
+<p>Переведіть десяткове число <em>A<sub>10</sub></em> у двійкову систему числення (8-бітний формат).</p>
+
+<table>
+<thead><tr><th>Варіант</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
+<tbody>
+<tr><td class="lbl"><em>A</em><sub>10</sub></td><td>45</td><td>78</td><td>123</td><td>201</td><td>55</td><td>167</td></tr>
+</tbody>
+</table>
+
+<div class="card lab">
+<strong>Покроковий конвертер (метод діління на 2)</strong>
+<p style="margin-top:6px; color:var(--muted);">Оберіть варіант або введіть будь-яке число 0–255 — застосунок покаже кожен крок ділення та зібраний результат.</p>
+<div class="variant-picker" id="t2variants"></div>
+<div class="ctrl-row">
+  <label>A<sub>10</sub>:</label><input type="number" class="textbox" id="t2input" value="45" min="0" max="255" style="width:90px;">
+  <button class="btn primary" id="t2calc">Перетворити</button>
+</div>
+<div class="steps-box" id="t2steps"></div>
+<div class="ctrl-row">
+  <span style="color:var(--muted);">Результат (8 біт):</span><span class="readout mono" id="t2result">00101101</span>
+</div>
+</div>
+</section>
+
+<section class="block" id="t3">
+<div class="num">ЗАВДАННЯ 3</div>
+<h2>Двійкова арифметика</h2>
+<p>Виконайте додавання двох двійкових чисел <em>X</em> та <em>Y</em>.</p>
+
+<table>
+<thead><tr><th>Варіант</th><th>Число X</th><th>Число Y</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td class="mono">00101101</td><td class="mono">00010111</td></tr>
+<tr><td><strong>2</strong></td><td class="mono">01001110</td><td class="mono">00110001</td></tr>
+<tr><td><strong>3</strong></td><td class="mono">01111011</td><td class="mono">00001101</td></tr>
+<tr><td><strong>4</strong></td><td class="mono">11001001</td><td class="mono">00101010</td></tr>
+<tr><td><strong>5</strong></td><td class="mono">00110111</td><td class="mono">01010101</td></tr>
+<tr><td><strong>6</strong></td><td class="mono">10100111</td><td class="mono">00111100</td></tr>
+</tbody>
+</table>
+
+<div class="card lab">
+<strong>Калькулятор двійкового додавання</strong>
+<p style="margin-top:6px; color:var(--muted);">Оберіть варіант або введіть свої 8-бітні числа — застосунок покаже перенесення в кожному розряді.</p>
+<div class="variant-picker" id="t3variants"></div>
+<div class="ctrl-row">
+  <label>X:</label><input type="text" class="textbox mono" id="t3X" value="00101101" maxlength="8" style="width:120px;">
+  <label style="margin-left:10px;">Y:</label><input type="text" class="textbox mono" id="t3Y" value="00010111" maxlength="8" style="width:120px;">
+  <button class="btn primary" id="t3calc" style="margin-left:10px;">Додати</button>
+</div>
+<div id="t3rows" style="margin-top:14px;"></div>
+<p id="t3note" style="color:var(--muted); font-size:.88rem;"></p>
+</div>
+</section>
+
+<section class="block" id="t4">
+<div class="num">ЗАВДАННЯ 4</div>
+<h2>Логічні операції</h2>
+<p>Обчисліть значення логічної функції <em>Y</em> = (<em>A</em>∧<em>B</em>)∨<em>C</em> для заданих наборів вхідних змінних <em>A</em>, <em>B</em>, <em>C</em>.</p>
+
+<table>
+<thead><tr><th>Варіант</th><th>A</th><th>B</th><th>C</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td>1</td><td>0</td><td>1</td></tr>
+<tr><td><strong>2</strong></td><td>0</td><td>1</td><td>0</td></tr>
+<tr><td><strong>3</strong></td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td><strong>4</strong></td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td><strong>5</strong></td><td>1</td><td>1</td><td>0</td></tr>
+<tr><td><strong>6</strong></td><td>0</td><td>1</td><td>1</td></tr>
+</tbody>
+</table>
+
+<div class="card lab">
+<strong>Обчислювач функції Y = (A∧B)∨C</strong>
+<p style="margin-top:6px; color:var(--muted);">Оберіть варіант або клацніть на A, B, C — обидва логічні елементи одразу покажуть проміжний і кінцевий результат.</p>
+<div class="variant-picker" id="t4variants"></div>
+<div class="ctrl-row">
+  <label>A:</label><span class="bit" id="t4A">0</span>
+  <label style="margin-left:10px;">B:</label><span class="bit" id="t4B">0</span>
+  <label style="margin-left:10px;">C:</label><span class="bit" id="t4C">0</span>
+</div>
+<div id="t4gates"></div>
+<div class="ctrl-row">
+  <span style="color:var(--muted);">Y = (A∧B)∨C = </span><span class="readout mono" id="t4Y">0</span>
+</div>
+</div>
+</section>
+
+<section class="block" id="t5">
+<div class="num">ЗАВДАННЯ 5</div>
+<h2>Побудова ДДНФ</h2>
+<p>Запишіть досконалу диз'юнктивну нормальну форму (ДДНФ) для функції <em>f</em>(<em>x</em><sub>2</sub>, <em>x</em><sub>1</sub>, <em>x</em><sub>0</sub>), яка приймає значення «1» на заданих наборах (десяткові еквіваленти).</p>
+
+<table>
+<thead><tr><th>Варіант</th><th>Набори, де f = 1</th></tr></thead>
+<tbody>
+<tr><td><strong>1</strong></td><td>0, 3, 5</td></tr>
+<tr><td><strong>2</strong></td><td>1, 4, 7</td></tr>
+<tr><td><strong>3</strong></td><td>2, 5, 6</td></tr>
+<tr><td><strong>4</strong></td><td>0, 1, 6</td></tr>
+<tr><td><strong>5</strong></td><td>3, 4, 5</td></tr>
+<tr><td><strong>6</strong></td><td>2, 3, 7</td></tr>
+</tbody>
+</table>
+
+<div class="card lab">
+<strong>Конструктор ДДНФ</strong>
+<p style="margin-top:6px; color:var(--muted);">Оберіть варіант або клацніть потрібні набори (0–7) — для кожного мінтерма застосунок покаже трибітний код <em>x<sub>2</sub>x<sub>1</sub>x<sub>0</sub></em> і кон'юнктивний терм, а внизу зберете повну ДДНФ.</p>
+<div class="variant-picker" id="t5variants"></div>
+<div class="mset" id="t5minterms"></div>
+<div id="t5terms"></div>
+<div class="ddnf-out" id="t5out">f = —</div>
+</div>
+</section>
+
+<section class="block" id="quiz">
+<div class="num">ПІДСУМОК</div>
+<div class="quiz-head">
+  <h2 style="margin:0;">Перевірка знань</h2>
+  <span class="score-badge" id="quizScore">Результат: 0 / 8</span>
+</div>
+<p style="color:var(--muted);">Дайте відповідь на кожне запитання — правильність перевіряється відразу, з коротким поясненням.</p>
+<div id="quizArea"></div>
+</section>
+
+</main>
+</div>
+
+<footer>Матеріал підготовлено на основі завдань практичної роботи №1 курсу «Комп'ютерна схемотехніка та архітектура ІС» · інтерактивна версія для Moodle</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- generic helpers ---------- */
+function $(id){return document.getElementById(id);}
+function setBit(el,v){
+  el.textContent = v;
+  el.classList.toggle('on', v===1);
+  el.dataset.v = v;
+}
+function makeToggle(id, onChange, init){
+  const el = $(id);
+  if(!el) return null;
+  setBit(el, init||0);
+  el.addEventListener('click', ()=>{
+    const v = el.dataset.v==='1' ? 0 : 1;
+    setBit(el, v);
+    onChange(v);
+  });
+  return el;
+}
+function buildVariantPicker(containerId, count, onPick){
+  const wrap = $(containerId);
+  if(!wrap) return;
+  for(let i=1;i<=count;i++){
+    const b = document.createElement('button');
+    b.className='variant-btn'; b.textContent='Варіант '+i; b.dataset.v=i;
+    b.addEventListener('click', ()=>{
+      wrap.querySelectorAll('.variant-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      onPick(i);
+    });
+    wrap.appendChild(b);
+  }
+}
+
+/* ---------- hero wave canvas ---------- */
+(function(){
+  const c = document.getElementById('waveCanvas');
+  if(!c) return;
+  function resize(){ c.width = c.clientWidth * devicePixelRatio; c.height = c.clientHeight * devicePixelRatio; }
+  const ro = new ResizeObserver(resize); ro.observe(c); resize();
+  const ctx = c.getContext('2d');
+  let t=0;
+  function draw(){
+    const w=c.width, h=c.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.lineWidth = 2*devicePixelRatio;
+    ctx.strokeStyle = 'rgba(10,111,102,0.55)';
+    ctx.beginPath();
+    for(let x=0;x<w;x+=2){
+      const y = h/2 + Math.sin(x*0.02 + t)*h*0.18 + Math.sin(x*0.008+t*0.6)*h*0.10;
+      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(156,99,16,0.6)';
+    ctx.lineWidth = 2.5*devicePixelRatio;
+    ctx.beginPath();
+    const steps=16, stepW=w/steps;
+    let prevY=null;
+    for(let i=0;i<steps;i++){
+      const x = i*stepW;
+      const y = h/2 + Math.sin(x*0.02+t)*h*0.18 + Math.sin(x*0.008+t*0.6)*h*0.10;
+      const qy = Math.round(y/(h/10))*(h/10);
+      if(prevY===null){ ctx.moveTo(x,qy); } else { ctx.lineTo(x,prevY); ctx.lineTo(x,qy); }
+      prevY=qy;
+    }
+    ctx.lineTo(w,prevY);
+    ctx.stroke();
+    t+=0.012;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ==================================================================
+   TASK 1 — quantization step calculator
+   ================================================================== */
+(function(){
+  const T1 = {1:[5,8], 2:[10,10], 3:[2.56,8], 4:[12,12], 5:[3.3,10], 6:[5,12]};
+  const UrefEl = $('t1Uref'), nEl = $('t1n'), levelsEl=$('t1levels'), hEl=$('t1h');
+  const canvas = $('t1canvas');
+  if(!UrefEl) return;
+  buildVariantPicker('t1variants', 6, (v)=>{
+    UrefEl.value = T1[v][0]; nEl.value = T1[v][1]; compute();
+  });
+  function fitCanvas(){ canvas.width=canvas.clientWidth*devicePixelRatio; canvas.height=canvas.clientHeight*devicePixelRatio; render(); }
+  new ResizeObserver(fitCanvas).observe(canvas);
+  let lastLevels=256, lastUref=5, lastH=5/256;
+  function render(){
+    const ctx = canvas.getContext('2d');
+    const w=canvas.width,h=canvas.height;
+    ctx.clearRect(0,0,w,h);
+    const showSteps = Math.min(lastLevels, 32);
+    const stepW = w/showSteps;
+    ctx.strokeStyle = '#D6DEE6'; ctx.lineWidth=1*devicePixelRatio;
+    for(let i=0;i<=showSteps;i++){
+      const x=i*stepW;
+      ctx.beginPath(); ctx.moveTo(x,h*0.25); ctx.lineTo(x,h*0.75); ctx.stroke();
+    }
+    ctx.fillStyle='rgba(10,111,102,0.18)';
+    for(let i=0;i<showSteps;i+=2){ ctx.fillRect(i*stepW,h*0.25,stepW,h*0.5); }
+    ctx.strokeStyle='#0A6F66'; ctx.lineWidth=2*devicePixelRatio;
+    ctx.strokeRect(0,h*0.25,w,h*0.5);
+    ctx.fillStyle='#5B6B7B'; ctx.font=(11*devicePixelRatio)+'px monospace';
+    ctx.fillText('0 В', 4, h*0.18);
+    ctx.textAlign='right';
+    ctx.fillText(lastUref+' В', w-4, h*0.18);
+    ctx.textAlign='left';
+    ctx.fillText('крок h ≈ '+lastH.toPrecision(4)+' В (показано '+showSteps+' з '+lastLevels+' рівнів)', 4, h*0.94);
+  }
+  function compute(){
+    const Uref = parseFloat(UrefEl.value)||0;
+    const n = parseInt(nEl.value)||1;
+    const levels = Math.pow(2,n);
+    const h = Uref/levels;
+    levelsEl.textContent = levels.toLocaleString('uk-UA');
+    hEl.textContent = h.toPrecision(6)+' В';
+    lastLevels=levels; lastUref=Uref; lastH=h;
+    render();
+  }
+  $('t1calc').addEventListener('click', compute);
+  UrefEl.addEventListener('change', compute);
+  nEl.addEventListener('change', compute);
+  fitCanvas();
+  compute();
+})();
+
+/* ==================================================================
+   TASK 2 — decimal to binary, division-by-2 algorithm
+   ================================================================== */
+(function(){
+  const T2 = {1:45, 2:78, 3:123, 4:201, 5:55, 6:167};
+  const input = $('t2input'), stepsBox=$('t2steps'), resultEl=$('t2result');
+  if(!input) return;
+  buildVariantPicker('t2variants', 6, (v)=>{ input.value = T2[v]; compute(); });
+  function compute(){
+    let n = parseInt(input.value);
+    if(isNaN(n) || n<0) n=0;
+    if(n>255) n=255;
+    input.value = n;
+    const steps = [];
+    let cur = n;
+    if(cur===0){ steps.push([0,0,0]); }
+    while(cur>0){
+      const rem = cur % 2;
+      const q = Math.floor(cur/2);
+      steps.push([cur, q, rem]);
+      cur = q;
+    }
+    let bits = steps.map(s=>s[2]).reverse().join('');
+    if(bits==='') bits='0';
+    bits = bits.padStart(8,'0').slice(-8);
+    let html = '<table><thead><tr><th>Число</th><th>÷ 2 → частка</th><th>залишок (біт)</th></tr></thead><tbody>';
+    steps.forEach(s=>{
+      html += `<tr><td>${s[0]}</td><td>${s[1]}</td><td><strong>${s[2]}</strong></td></tr>`;
+    });
+    html += '</tbody></table><p style="color:var(--muted); font-size:.85rem;">Двійкове число збирається знизу вгору (від останнього залишку до першого) і доповнюється нулями зліва до 8 біт.</p>';
+    stepsBox.innerHTML = html;
+    resultEl.textContent = bits;
+  }
+  $('t2calc').addEventListener('click', compute);
+  compute();
+})();
+
+/* ==================================================================
+   TASK 3 — binary addition with carry visualization
+   ================================================================== */
+(function(){
+  const T3 = {
+    1:['00101101','00010111'], 2:['01001110','00110001'], 3:['01111011','00001101'],
+    4:['11001001','00101010'], 5:['00110111','01010101'], 6:['10100111','00111100']
+  };
+  const Xin=$('t3X'), Yin=$('t3Y'), rowsBox=$('t3rows'), note=$('t3note');
+  if(!Xin) return;
+  buildVariantPicker('t3variants', 6, (v)=>{ Xin.value=T3[v][0]; Yin.value=T3[v][1]; compute(); });
+  function sanitize(s){ return (s||'').replace(/[^01]/g,'').padStart(8,'0').slice(-8); }
+  function compute(){
+    const X = sanitize(Xin.value), Y = sanitize(Yin.value);
+    Xin.value=X; Yin.value=Y;
+    const xb = X.split('').map(Number), yb = Y.split('').map(Number);
+    let carry = 0;
+    const sum = new Array(8).fill(0);
+    const carries = new Array(8).fill(0);
+    for(let i=7;i>=0;i--){
+      const total = xb[i]+yb[i]+carry;
+      sum[i] = total % 2;
+      carries[i] = carry;
+      carry = total>=2 ? 1 : 0;
+    }
+    const overflow = carry;
+    function row(label, arr, cls){
+      let cells = arr.map(b=>`<span class="cell ${cls&&b===1?cls:''}">${b}</span>`).join('');
+      return `<div class="bitrow" style="margin:3px 0;"><span class="lbl">${label}</span>${cells}</div>`;
+    }
+    let carryRow = '<div class="bitrow" style="margin:3px 0;"><span class="lbl">перенесення</span>' +
+      carries.map(c=>`<span class="cell carry">${c? '1':''}</span>`).join('') + '</div>';
+    let html = '';
+    html += carryRow;
+    html += row('X', xb);
+    html += row('Y', yb);
+    html += '<div class="hr" style="margin:6px 0;"></div>';
+    html += row('X + Y', sum, 'on');
+    rowsBox.innerHTML = html;
+    const sumStr = sum.join('');
+    if(overflow){
+      note.innerHTML = 'Сума виходить за межі 8 біт: повний результат — <strong>1'+sumStr+'</strong> (9-й біт — перенесення за межі розряду, при 8-бітному форматі результат буде «обрізано» до <strong>'+sumStr+'</strong>).';
+    } else {
+      note.innerHTML = 'Результат додавання (8 біт): <strong>'+sumStr+'</strong>. Переповнення розрядності не відбулося.';
+    }
+  }
+  $('t3calc').addEventListener('click', compute);
+  compute();
+})();
+
+/* ==================================================================
+   TASK 4 — logic function Y=(A AND B) OR C
+   ================================================================== */
+function gateSVG(sym, n){
+  const w=100,h=64, ry=n===1?32:20, ry2=44;
+  let svg = `<svg class="gate-svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+  svg += `<line x1="0" y1="${ry}" x2="26" y2="${ry}" stroke="#D5DCE3" stroke-width="2" class="wire-in1"/>`;
+  if(n===2) svg += `<line x1="0" y1="${ry2}" x2="26" y2="${ry2}" stroke="#D5DCE3" stroke-width="2" class="wire-in2"/>`;
+  svg += `<rect x="26" y="8" width="44" height="48" fill="#FFFFFF" stroke="#0A6F66" stroke-width="2" rx="4"/>`;
+  svg += `<text x="48" y="${n===1?36:36}" text-anchor="middle" fill="#151E28" font-family="IBM Plex Mono, monospace" font-size="15">${sym}</text>`;
+  svg += `<line x1="70" y1="32" x2="${w}" y2="32" stroke="#D5DCE3" stroke-width="2" class="wire-out"/>`;
+  svg += `</svg>`;
+  return svg;
+}
+(function(){
+  const T4 = {1:[1,0,1], 2:[0,1,0], 3:[1,1,1], 4:[0,0,1], 5:[1,1,0], 6:[0,1,1]};
+  const gatesWrap = $('t4gates');
+  if(!gatesWrap) return;
+  gatesWrap.innerHTML = `
+    <div class="gate-widget">
+      <div class="gate-name">І (AND)</div>
+      <div class="gate-io"><span class="bit static" data-role="a">0</span><span class="bit static" data-role="b">0</span></div>
+      <div>${gateSVG('&amp;',2)}</div>
+      <div class="gate-io"><span class="arrow">D →</span><span class="bit static on" data-role="d">0</span></div>
+    </div>
+    <div class="gate-widget">
+      <div class="gate-name">АБО (OR)</div>
+      <div class="gate-io"><span class="bit static" data-role="d2">0</span><span class="bit static" data-role="c">0</span></div>
+      <div>${gateSVG('1',2)}</div>
+      <div class="gate-io"><span class="arrow">Y →</span><span class="bit static on" data-role="y">0</span></div>
+    </div>
+  `;
+  const aDisp = gatesWrap.querySelector('[data-role="a"]');
+  const bDisp = gatesWrap.querySelector('[data-role="b"]');
+  const dDisp = gatesWrap.querySelector('[data-role="d"]');
+  const d2Disp = gatesWrap.querySelector('[data-role="d2"]');
+  const cDisp = gatesWrap.querySelector('[data-role="c"]');
+  const yDisp = gatesWrap.querySelector('[data-role="y"]');
+  buildVariantPicker('t4variants', 6, (v)=>{
+    const [a,b,c] = T4[v];
+    setBit($('t4A'), a); setBit($('t4B'), b); setBit($('t4C'), c);
+    recompute();
+  });
+  function recompute(){
+    const a = parseInt($('t4A').dataset.v||'0'), b = parseInt($('t4B').dataset.v||'0'), c = parseInt($('t4C').dataset.v||'0');
+    const d = a & b;
+    const y = d | c;
+    setBit(aDisp,a); setBit(bDisp,b); setBit(dDisp,d);
+    setBit(d2Disp,d); setBit(cDisp,c); setBit(yDisp,y);
+    $('t4Y').textContent = y;
+  }
+  makeToggle('t4A', recompute, 1);
+  makeToggle('t4B', recompute, 0);
+  makeToggle('t4C', recompute, 1);
+  recompute();
+})();
+
+/* ==================================================================
+   TASK 5 — DDNF constructor
+   ================================================================== */
+(function(){
+  const T5 = {1:[0,3,5], 2:[1,4,7], 3:[2,5,6], 4:[0,1,6], 5:[3,4,5], 6:[2,3,7]};
+  const wrap = $('t5minterms'), termsBox = $('t5terms'), out = $('t5out');
+  if(!wrap) return;
+  const selected = new Set();
+  for(let i=0;i<8;i++){
+    const bin = i.toString(2).padStart(3,'0');
+    const b = document.createElement('span');
+    b.className='bit'; b.dataset.idx=i;
+    b.innerHTML = i + '<br><small>'+bin+'</small>';
+    b.addEventListener('click', ()=>{
+      if(selected.has(i)){ selected.delete(i); b.classList.remove('on'); }
+      else { selected.add(i); b.classList.add('on'); }
+      recompute();
+    });
+    wrap.appendChild(b);
+  }
+  buildVariantPicker('t5variants', 6, (v)=>{
+    selected.clear();
+    wrap.querySelectorAll('.bit').forEach(el=>el.classList.remove('on'));
+    T5[v].forEach(idx=>{
+      selected.add(idx);
+      wrap.querySelector('.bit[data-idx="'+idx+'"]').classList.add('on');
+    });
+    recompute();
+  });
+  function termFor(i){
+    const bin = i.toString(2).padStart(3,'0');
+    const x2 = bin[0], x1 = bin[1], x0 = bin[2];
+    function lit(name,bitv){ return bitv==='1' ? name : '<span class="overline">'+name+'</span>'; }
+    return lit('x₂',x2) + '∧' + lit('x₁',x1) + '∧' + lit('x₀',x0);
+  }
+  function recompute(){
+    const arr = Array.from(selected).sort((a,b)=>a-b);
+    if(arr.length===0){
+      termsBox.innerHTML = '';
+      out.innerHTML = 'f = — (оберіть хоча б один набір)';
+      return;
+    }
+    termsBox.innerHTML = arr.map(i=>'<span class="term-chip">набір '+i+' → ('+termFor(i)+')</span>').join(' ');
+    out.innerHTML = 'f(x₂,x₁,x₀) = ' + arr.map(i=>'('+termFor(i)+')').join(' ∨ ');
+  }
+  recompute();
+})();
+
+/* ==================================================================
+   QUIZ — knowledge check
+   ================================================================== */
+(function(){
+  const QUIZ = [
+    {
+      q: 'Яка формула визначає крок квантування h n-розрядного АЦП з опорною напругою U_ref?',
+      opts: ['h = U_ref · 2ⁿ', 'h = U_ref / 2ⁿ', 'h = 2ⁿ / U_ref', 'h = U_ref + 2ⁿ'],
+      correct: 1,
+      explain: 'Діапазон напруги U_ref розбивається на 2ⁿ рівнів квантування, тому крок h = U_ref / 2ⁿ.'
+    },
+    {
+      q: 'Що відбувається з кроком квантування h, якщо збільшити розрядність АЦП n (при незмінному U_ref)?',
+      opts: ['h збільшується', 'h зменшується (точність зростає)', 'h не змінюється', 'h стає від’ємним'],
+      correct: 1,
+      explain: 'Число рівнів 2ⁿ росте експоненційно з n, тому h = U_ref/2ⁿ зменшується — точність перетворення підвищується.'
+    },
+    {
+      q: 'Яким чином отримують двійкові розряди числа методом послідовного ділення на 2?',
+      opts: [
+        'Розряди — це залишки від ділення, зібрані знизу вгору (від останнього до першого)',
+        'Розряди — це частки від ділення, зібрані у порядку обчислення',
+        'Розряди беруться з десяткового запису напряму',
+        'Метод ділення на 2 застосовують лише до від’ємних чисел'
+      ],
+      correct: 0,
+      explain: 'На кожному кроці число ділять на 2; залишок (0 або 1) — це черговий біт. Остаточне число читають від останнього залишку до першого.'
+    },
+    {
+      q: 'Що означає перенесення (carry) за межі старшого розряду при додаванні двох 8-бітних чисел?',
+      opts: [
+        'Результат завжди хибний і обчислення потрібно повторити',
+        'Виникає переповнення розрядності: справжня сума не вміщається у 8 біт',
+        'Це означає, що одне з чисел було від’ємним',
+        'Перенесення ігнорується і ніяк не впливає на результат'
+      ],
+      correct: 1,
+      explain: 'Якщо після додавання старших розрядів залишається перенесення «за межі» восьмого біта, сума не вміщається у 8-бітну сітку — відбувається переповнення (потрібен 9-й біт).'
+    },
+    {
+      q: 'У виразі Y = (A∧B)∨C яка операція виконується першою (має вищий пріоритет)?',
+      opts: ['Диз’юнкція (∨)', 'Кон’юнкція (∧)', 'Обидві виконуються одночасно', 'Пріоритет залежить від значень A, B, C'],
+      correct: 1,
+      explain: 'Дужки прямо вказують порядок: спочатку обчислюється A∧B, а вже потім результат об’єднується з C через ∨. Навіть без дужок кон’юнкція традиційно має вищий пріоритет за диз’юнкцію.'
+    },
+    {
+      q: 'Чому дорівнює Y = (A∧B)∨C при A=1, B=0, C=1?',
+      opts: ['0', '1', 'невизначено', 'залежить від порядку обчислення'],
+      correct: 1,
+      explain: 'A∧B = 1∧0 = 0; далі 0∨C = 0∨1 = 1. Отже Y = 1.'
+    },
+    {
+      q: 'Скільки змінних потрібно, щоб задати функцію f(x₂,x₁,x₀) наборами від 0 до 7?',
+      opts: ['2 змінні', '3 змінні (2³ = 8 наборів)', '4 змінні', '8 змінних'],
+      correct: 1,
+      explain: 'Три бінарні змінні дають 2³ = 8 можливих комбінацій (0…7), що й відповідає наборам аргументів функції.'
+    },
+    {
+      q: 'Як у кон’юнктивному термі ДДНФ позначається змінна, яка у відповідному наборі дорівнює 0?',
+      opts: [
+        'Вона просто пропускається з терму',
+        'Береться із запереченням (інверсією) — наприклад, x̄',
+        'Замінюється на константу 0 у всьому вираз',
+        'Записується як змінна в квадраті'
+      ],
+      correct: 1,
+      explain: 'У ДДНФ кожен мінтерм містить усі змінні: якщо змінна дорівнює 1 — береться сама змінна, якщо 0 — її заперечення (наприклад, x̄₁).'
+    }
+  ];
+  const area = $('quizArea'), scoreBadge = $('quizScore');
+  if(!area) return;
+  let score = 0;
+  QUIZ.forEach((item, qi)=>{
+    const box = document.createElement('div');
+    box.className = 'quiz-q';
+    box.innerHTML = `<div class="qtitle">${qi+1}. ${item.q}</div>`;
+    item.opts.forEach((optText, oi)=>{
+      const b = document.createElement('button');
+      b.className = 'quiz-opt';
+      b.textContent = optText;
+      b.addEventListener('click', ()=>{
+        const allOpts = box.querySelectorAll('.quiz-opt');
+        allOpts.forEach(x=>x.disabled=true);
+        if(oi===item.correct){
+          b.classList.add('correct');
+          score++;
+        } else {
+          b.classList.add('incorrect');
+          allOpts[item.correct].classList.add('correct');
+        }
+        const ex = document.createElement('div');
+        ex.className='quiz-explain';
+        ex.textContent = item.explain;
+        box.appendChild(ex);
+        scoreBadge.textContent = 'Результат: '+score+' / '+QUIZ.length;
+      });
+      box.appendChild(b);
+    });
+    area.appendChild(box);
+  });
+})();
+
+/* ---------- TOC active-link on scroll ---------- */
+(function(){
+  const links = document.querySelectorAll('nav.toc a');
+  const sections = Array.from(links).map(a=>document.querySelector(a.getAttribute('href')));
+  function onScroll(){
+    let idx = 0;
+    sections.forEach((s,i)=>{ if(s && s.getBoundingClientRect().top < 140) idx=i; });
+    links.forEach((a,i)=> a.classList.toggle('active', i===idx));
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+
+})();
+</script>
+</body>
+</html>
